@@ -28,7 +28,9 @@ session = Session(engine)
 from flask import Flask
 app = Flask(__name__)
 
-
+# Initialize trip start and end dates(random)
+start_date = '2016-02-01'
+end_date = '2016-02-10'
 #Flask Routes for application
 @app.route("/")
 def homepage():
@@ -38,7 +40,7 @@ def homepage():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/start<br/>"
+        f"/api/v1.0/start_date<br/>"
     )
 
 @app.route("/api/v1.0/precipitation")
@@ -67,11 +69,51 @@ def stations():
 
 @app.route("/api/v1.0/tobs")
 def tobs():
-    return "tobs information"
-@app.route("/api/v1.0/start")
-def startendrange():
-    return "start-end-range tmin,tavg,tmax for the dates"
+    #Query the dates and temperature observations of the most active station for the last year of data
+    sel1 = [measurement.station,func.count(measurement.station)]
+    active_stations = session.query(*sel1).group_by(measurement.station).\
+                  order_by(func.count(measurement.station).desc()).first()
+    most_active_station_id = active_stations.station
+    sel = [measurement.station,func.min(measurement.tobs),func.max(measurement.tobs),func.avg(measurement.tobs)]
+    most_active_station_temp = session.query(*sel).filter(measurement.station==most_active_station_id)
+    for row in most_active_station_temp:
+        most_active_station_temp_dict ={"Active Station":row[0] ,"MinTemp": row[1], "MaxTemp": row[2], "AvgTemp" : row[3]}
+    return jsonify(most_active_station_temp_dict)
+
+@app.route("/api/v1.0/start_date")
+def temps_start():
     
+    tobs_results=session.query(func.min(measurement.tobs), func.avg(measurement.tobs), func.max(measurement.tobs)).\
+        filter(measurement.date >= start_date).all()
+
+    # Convert the query results to a Dictionary using date as the key and tobs as the value.
+    tobs=[]
+    for row in tobs_results:
+        tobs_dict = {}
+        tobs_dict["tmin"] = row[0]
+        tobs_dict["tavg"] = row[1]
+        tobs_dict["tmax"] = row[2]
+        tobs.append(tobs_dict)
+
+    return jsonify(tobs)
+
+
+@app.route("/api/v1.0/start_date/end_date")
+def temps_start_end():
+    
+    tobs_results=session.query(func.min(measurement.tobs), func.avg(measurement.tobs), func.max(measurement.tobs)).\
+        filter(measurement.date >= start_date).filter(measurement.date <= end_date).all()
+
+    # Convert the query results to a Dictionary using date as the key and tobs as the value.
+    tobs=[]
+    for row in tobs_results:
+        tobs_dict = {}
+        tobs_dict["tmin"] = row[0]
+        tobs_dict["tavg"] = row[1]
+        tobs_dict["tmax"] = row[2]
+        tobs.append(tobs_dict)
+
+    return jsonify(tobs)
 
 #Define runtime environment in debug mode
 
