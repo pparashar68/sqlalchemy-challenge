@@ -1,2 +1,7 @@
 # sqlalchemy-challenge
-Home work is in progress please do not check yet. Thanks
+started jupter notebook and readme for homework has lot of descripemncies.
+    1. In Readme it says to plot the graph using plot but in jupyter notebook it
+       ask to plot using Matplotlib. I have chossen Matplotlib to plot the requested graph
+    2.trip start date used :2017-02-01
+    3. trip end date used : 2017-02-10
+    
