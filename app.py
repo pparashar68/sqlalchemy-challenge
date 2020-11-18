@@ -57,7 +57,14 @@ def precipitation():
 
 @app.route("/api/v1.0/stations")
 def stations():
-    return "Stations Information"
+    #Return a JSON list of Active stations from the dataset
+    sel = [measurement.station,func.count(measurement.station)]
+    active_stations = session.query(*sel).group_by(measurement.station).\
+                      order_by(func.count(measurement.station).desc()).all()
+    active_stations_dict = {active_stations[i][0]: active_stations[i][1] for i in range(0, len(active_stations))}
+
+    return jsonify(active_stations_dict)
+
 @app.route("/api/v1.0/tobs")
 def tobs():
     return "tobs information"
